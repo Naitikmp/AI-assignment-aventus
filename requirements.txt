@@ -1,0 +1,12 @@
+# Core Framework & Validation
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+
+# Terminal UI & Formatting
+rich>=13.7.0
+
+# Testing & Quality Assurance
+pytest>=7.4.0
+
+# Optional: Cloud LLM Providers (Active only when credentials are provided in .env)
+openai>=1.30.0
