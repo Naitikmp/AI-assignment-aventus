@@ -29,6 +29,8 @@ wheels/
 venv/
 ENV/
 env/
+.*venv*/
+*.venv*/
 
 # Environment Variables & Secrets (CRITICAL: Never commit secrets)
 .env

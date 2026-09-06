@@ -1,6 +1,6 @@
 # Corporate Travel Expense Policy Assistant
 
-A production-grade, highly reliable AI assistant designed to answer corporate travel expense questions grounded strictly in organizational policy. Built with an offline-first architecture, explicit out-of-scope guardrails, data deduplication, and pluggable integration for Microsoft Azure OpenAI and OpenAI.
+A focused, reliable AI assistant designed to answer corporate travel expense questions grounded strictly in organizational policy. Built with an offline-first architecture, explicit out-of-scope guardrails, data deduplication, and pluggable integration for Azure OpenAI and OpenAI.
 
 ---
 
@@ -10,8 +10,8 @@ A production-grade, highly reliable AI assistant designed to answer corporate tr
 - **Out-of-Scope Policy Guardrail:** Automatically flags queries that fall outside corporate coverage (e.g., unsupported expense categories like car rental or personal expenses, or regions where specific services like taxis are not covered).
 - **Data Ingestion & Deduplication:** Generic CSV parser that normalizes schema types, handles nullable limits, and cleans duplicate rows before indexing.
 - **Deterministic Default Engine:** Operates instantly out-of-the-box with **zero external API keys, accounts, or model downloads required**.
-- **Enterprise Cloud LLM Support:** Ready for Microsoft's enterprise AI stack; seamlessly connects to **Azure OpenAI (Azure AI Foundry)** or **OpenAI** when environment variables are supplied.
-- **Interactive & Single-Shot CLI:** Formatted with `rich` terminal cards, status badges, and source citations.
+- **Optional Cloud LLM Support:** Easily connects to **Azure OpenAI** or **OpenAI** when environment variables are supplied, with automatic fallback to local mode.
+- **Interactive & Single-Shot CLI:** Formatted with terminal cards, status badges, and source citations.
 - **Containerized:** Single-stage Docker support for reproducible deployment.
 
 ---
@@ -193,8 +193,10 @@ OPENAI_MODEL=gpt-4o-mini
 ├── requirements.txt                     # Pinned dependencies
 ├── pyproject.toml                       # Python package configuration
 ├── Dockerfile                           # Container definition
+├── .dockerignore                        # Docker ignore rules
 ├── .env.example                         # Environment configuration template
 ├── .gitignore                           # Git hygiene rules
 ├── README.md                            # Documentation
-└── SUBMISSION_NOTE.md                   # Engineering highlights & roadmap
+├── SUBMISSION_NOTE.md                   # Engineering highlights & roadmap
+└── Technical_Assessment.pdf             # Original assessment specification
 ```

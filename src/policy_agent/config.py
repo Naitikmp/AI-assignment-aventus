@@ -4,7 +4,10 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    load_dotenv()
+except Exception:
+    pass
 
 
 class AgentConfig:

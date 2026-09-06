@@ -1,5 +1,11 @@
 import argparse
 import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path for direct execution
+REPO_ROOT = Path(__file__).resolve().parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # Optional rich library for enhanced terminal rendering; graceful fallback to built-in print
 try:
