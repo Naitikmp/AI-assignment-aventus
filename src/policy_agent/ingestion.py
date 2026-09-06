@@ -1,7 +1,8 @@
 import csv
 import logging
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
+
 from src.policy_agent.schemas import PolicyRecord
 
 logger = logging.getLogger(__name__)

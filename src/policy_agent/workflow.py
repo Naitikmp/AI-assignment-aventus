@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Optional, List
-from src.policy_agent.schemas import AgentResponse, PolicyRecord, CoverageVerdict
-from src.policy_agent.ingestion import PolicyLoader, IngestionStats
+from typing import Optional
+
+from src.policy_agent.config import AgentConfig
+from src.policy_agent.ingestion import PolicyLoader
 from src.policy_agent.policy_index import PolicyIndex
 from src.policy_agent.providers.factory import ProviderFactory
-from src.policy_agent.providers.base import BasePolicyProvider
-from src.policy_agent.config import AgentConfig
+from src.policy_agent.schemas import AgentResponse, CoverageVerdict
 
 
 class PolicyAssistant:

@@ -1,7 +1,9 @@
-import pytest
 from pathlib import Path
-from src.policy_agent.workflow import PolicyAssistant
+
+import pytest
+
 from src.policy_agent.ingestion import PolicyLoader
+from src.policy_agent.workflow import PolicyAssistant
 
 
 @pytest.fixture(scope="session")

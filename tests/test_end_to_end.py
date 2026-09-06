@@ -1,4 +1,3 @@
-import pytest
 from src.policy_agent.schemas import CoverageVerdict
 from src.policy_agent.workflow import PolicyAssistant
 

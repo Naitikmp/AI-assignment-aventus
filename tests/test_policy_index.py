@@ -1,6 +1,5 @@
-import pytest
-from src.policy_agent.schemas import CoverageVerdict
 from src.policy_agent.policy_index import PolicyIndex
+from src.policy_agent.schemas import CoverageVerdict
 
 
 def test_uae_meal_query(loaded_records):

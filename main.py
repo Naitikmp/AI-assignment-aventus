@@ -1,20 +1,18 @@
-import sys
 import argparse
-from pathlib import Path
-from src.policy_agent.workflow import PolicyAssistant
-from src.policy_agent.schemas import CoverageVerdict
+import sys
 
-# Try importing rich for formatted terminal output; fallback to standard print if not installed
+# Optional rich library for enhanced terminal rendering; graceful fallback to built-in print
 try:
     from rich.console import Console
     from rich.panel import Panel
-    from rich.table import Table
-    from rich.text import Text
     HAS_RICH = True
     console = Console()
 except ImportError:
     HAS_RICH = False
     console = None
+
+from src.policy_agent.schemas import CoverageVerdict
+from src.policy_agent.workflow import PolicyAssistant
 
 
 def render_response(response, provider_name: str):

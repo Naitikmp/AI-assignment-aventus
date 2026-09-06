@@ -1,6 +1,7 @@
 from typing import List
-from src.policy_agent.schemas import PolicyRecord, CoverageVerdict, ExtractedIntent
+
 from src.policy_agent.providers.base import BasePolicyProvider
+from src.policy_agent.schemas import CoverageVerdict, ExtractedIntent, PolicyRecord
 
 
 class LocalPolicyProvider(BasePolicyProvider):

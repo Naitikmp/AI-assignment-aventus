@@ -1,6 +1,7 @@
 import re
-from typing import List, Optional, Tuple
-from src.policy_agent.schemas import PolicyRecord, ExtractedIntent, CoverageVerdict
+from typing import List, Tuple
+
+from src.policy_agent.schemas import CoverageVerdict, ExtractedIntent, PolicyRecord
 
 
 class PolicyIndex:

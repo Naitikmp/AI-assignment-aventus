@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
-from src.policy_agent.schemas import PolicyRecord, CoverageVerdict, ExtractedIntent
+
+from src.policy_agent.schemas import CoverageVerdict, ExtractedIntent, PolicyRecord
 
 
 class BasePolicyProvider(ABC):
