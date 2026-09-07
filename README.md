@@ -142,6 +142,13 @@ By default, the assistant runs in high-reliability **`local`** mode with determi
 
 2. Configure your desired provider:
 
+**For OpenRouter (Free open-source & commercial models):**
+```env
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=your-openrouter-key
+OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct:free
+```
+
 **For Azure OpenAI (Enterprise Microsoft Stack):**
 ```env
 LLM_PROVIDER=azure_openai
@@ -180,6 +187,7 @@ OPENAI_MODEL=gpt-4o-mini
 │           ├── __init__.py
 │           ├── base.py                  # Base provider interface
 │           ├── local_engine.py          # Deterministic grounded engine
+│           ├── openrouter_provider.py   # OpenRouter integration (supports free models)
 │           ├── azure_openai.py          # Azure OpenAI integration
 │           ├── openai_provider.py       # OpenAI integration
 │           └── factory.py               # Provider factory

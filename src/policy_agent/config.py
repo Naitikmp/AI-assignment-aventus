@@ -34,6 +34,11 @@ class AgentConfig:
     AZURE_OPENAI_DEPLOYMENT_NAME: Optional[str] = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o")
     AZURE_OPENAI_API_VERSION: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
 
+    # OpenRouter Settings (OpenAI-compatible)
+    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.2-3b-instruct:free")
+    OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+
     @classmethod
     def get_effective_provider(cls) -> str:
         """
@@ -50,4 +55,8 @@ class AgentConfig:
             if not cls.OPENAI_API_KEY:
                 return "local"
             return "openai"
+        elif provider == "openrouter":
+            if not cls.OPENROUTER_API_KEY:
+                return "local"
+            return "openrouter"
         return "local"

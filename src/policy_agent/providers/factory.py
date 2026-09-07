@@ -30,4 +30,12 @@ class ProviderFactory:
                 logger.warning(f"Could not initialize OpenAI ({e}). Using LocalPolicyProvider.")
                 return LocalPolicyProvider(), "local"
 
+        elif target == "openrouter":
+            try:
+                from src.policy_agent.providers.openrouter_provider import OpenRouterProvider
+                return OpenRouterProvider(), "openrouter"
+            except Exception as e:
+                logger.warning(f"Could not initialize OpenRouter ({e}). Using LocalPolicyProvider.")
+                return LocalPolicyProvider(), "local"
+
         return LocalPolicyProvider(), "local"

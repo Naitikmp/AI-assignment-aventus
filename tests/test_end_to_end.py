@@ -25,3 +25,12 @@ def test_end_to_end_provider_fallback():
     res = assistant.ask("What is the incidental allowance?")
     assert res.verdict == CoverageVerdict.COVERED
     assert "$25.00 USD" in res.answer
+
+
+def test_openrouter_provider_fallback_without_credentials():
+    # Attempting to initialize OpenRouter without an API key gracefully defaults to local
+    assistant = PolicyAssistant(provider_name="openrouter")
+    assert assistant.provider_name == "local"
+    res = assistant.ask("What is the meal limit in India?")
+    assert res.verdict == CoverageVerdict.COVERED
+    assert "$40.00 USD" in res.answer
