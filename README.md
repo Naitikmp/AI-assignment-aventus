@@ -1,116 +1,123 @@
 # Corporate Travel Expense Policy Assistant
 
-A focused, reliable AI assistant designed to answer corporate travel expense questions grounded strictly in organizational policy. Built with an offline-first architecture, explicit out-of-scope guardrails, data deduplication, and pluggable integration for OpenRouter and OpenAI.
+A reliable, lightweight AI assistant that answers employee questions about corporate travel expense policies. Built with an offline-first architecture, strict row-level citations, explicit out-of-scope guardrails, and automated deduplication.
+
+> **Zero-Friction Default:** Runs out-of-the-box with **zero API keys, zero paid accounts, and zero model downloads**.
 
 ---
 
-## Key Features
+## ⚡ Quickstart
 
-- **Strict Grounding (Zero Hallucination):** Every answered query is verified against corporate policy records. Limits, room types, flight duration rules, and receipt requirements are cited with exact row references.
-- **Out-of-Scope Policy Guardrail:** Automatically flags queries that fall outside corporate coverage (e.g., unsupported expense categories like car rental or personal expenses, or regions where specific services like taxis are not covered).
-- **Data Ingestion & Deduplication:** Generic CSV parser that normalizes schema types, handles nullable limits, and cleans duplicate rows before indexing.
-- **Deterministic Default Engine:** Operates instantly out-of-the-box with **zero external API keys, accounts, or model downloads required**.
-- **Optional Cloud LLM Support:** Easily connects to **OpenRouter** (supports free models) or **OpenAI** when environment variables are supplied, with automatic fallback to local mode.
-- **Interactive & Single-Shot CLI:** Formatted with terminal cards, status badges, and source citations.
-- **Containerized:** Single-stage Docker support for reproducible deployment.
-
----
-
-## Architecture
-
-```
-User Query (CLI / REPL)
-       │
-       ▼
-┌───────────────────────────────┐
-│       PolicyAssistant         │
-│     (Workflow Controller)     │
-└──────────────┬────────────────┘
-               │
-       ┌───────┴────────┐
-       ▼                ▼
-┌──────────────┐ ┌──────────────┐
-│ PolicyIndex  │ │ PolicyLoader │
-│ (Retrieval & │ │ (Deduplicate │
-│  Guardrail)  │ │  & Validate) │
-└──────┬───────┘ └──────────────┘
-       │
-       ├─────────────────────────────────────────┐
-       ▼                                         ▼
-[Coverage Status: COVERED]           [Coverage Status: OUT_OF_SCOPE]
-       │                                         │
-       ▼                                         ▼
-┌──────────────────────────────┐     ┌──────────────────────────────┐
-│       ProviderFactory        │     │  Explicit Policy Refusal     │
-│  (Local / OpenRouter/ OpenAI)│     │  (Clear boundary statement)  │
-└──────────────┬───────────────┘     └──────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────┐
-│ Grounded Response Generator  │
-│  (With Verifiable Citations) │
-└──────────────────────────────┘
-```
-
----
-
-## Quickstart
-
-### Option 1: Standard Python (Recommended)
-
-Requires Python 3.10 or higher.
+### 1. Install & Run (No API Key Needed)
 
 ```bash
-# 1. Clone the repository and navigate into the folder
-cd travel-policy-agent
+# 1. Clone and navigate into the project
+git clone https://github.com/Naitikmp/AI-assignment-aventus.git
+cd AI-assignment-aventus
 
-# 2. (Optional) Create and activate a virtual environment
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
-# 3. Install dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 4. Run sample queries
-python main.py "What is the daily meal limit in the United Arab Emirates?"
-python main.py "Can I book business class for an 8-hour flight?"
-python main.py "Can I expense a taxi in Dubai?"
+# 3. Ask a policy question directly
+python main.py "What is the daily meal limit in UAE?"
 
-# 5. Launch interactive chat mode
+# 4. Or launch interactive chat mode
 python main.py
 ```
 
-### Option 2: Docker
+### 2. Docker Alternative (Optional)
 
 ```bash
-# Build the Docker image
 docker build -t policy-agent .
-
-# Run a query in container
 docker run --rm policy-agent "What is the hotel allowance in London?"
 ```
 
 ---
 
-## Running Automated Tests
+## 🧪 Running Tests
 
-A comprehensive `pytest` test suite verifies data ingestion, deduplication, threshold matching, and out-of-scope guardrails:
+The test suite validates data ingestion, duplicate purging, flight duration thresholds, and out-of-scope refusals:
 
-```bash
-pytest
-```
-
-To run with verbose output:
 ```bash
 pytest -v
 ```
 
+All 18 automated tests run in `< 1` second.
+
 ---
 
-## Data Policy Reference (`travel_expense_policy.csv`)
+## 🛠️ CLI Usage & Options
+
+The CLI (`main.py`) supports both single-shot queries and an interactive session:
+
+```bash
+# Single question
+python main.py "Can I expense a taxi in Dubai?"
+
+# Custom CSV policy dataset
+python main.py --data path/to/custom_policy.csv "What is the hotel allowance in US?"
+
+# Force a specific provider ('local', 'openrouter', or 'openai')
+python main.py --provider local "Do I need receipts for incidentals?"
+```
+
+| Argument | Description | Default |
+| :--- | :--- | :--- |
+| `query` | The expense question to evaluate. If omitted, starts interactive chat mode. | *None* |
+| `--data` | Path to the policy CSV dataset. | `data/travel_expense_policy.csv` |
+| `--provider` | Active synthesis engine (`local`, `openrouter`, `openai`). | `local` (or from `.env`) |
+
+---
+
+## 🎯 Core Features & Engineering Highlights
+
+1. **Strict Grounding & Row Citations**  
+   Every response is backed by exact CSV row citations (e.g. `[Row 4] Meals (United Arab Emirates): $90.00 USD`). The assistant never invents or assumes unstated rates.
+
+2. **Explicit Out-of-Scope Guardrails**  
+   If a question falls outside policy coverage, the assistant explicitly identifies the reason and refuses to speculate:
+   - **Unsupported categories:** *Car rental*, *gym memberships*, *laundry*.
+   - **Unsupported regions:** *Meals in Germany*.
+   - **Regional service restrictions:** *Taxi in Dubai* (policy only reimburses taxis in the UK).
+
+3. **Ingestion Hygiene & Deduplication**  
+   The source dataset includes a duplicate entry (`Row 14: UK Meals`). The ingestion loader (`PolicyLoader`) applies business-key deduplication, automatically purging duplicates while logging stats.
+
+4. **Offline by Default, Pluggable for Cloud LLMs**  
+   Operates deterministically in `local` mode by default. Optional cloud providers can be activated via environment variables with an automatic graceful fallback to local mode if credentials fail.
+
+---
+
+## 🤖 Optional: Cloud LLM Integration
+
+To enable cloud model synthesis instead of the local deterministic engine:
+
+1. Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Configure your preferred provider in `.env`:
+
+   **OpenRouter (Supports free open-source models):**
+   ```env
+   LLM_PROVIDER=openrouter
+   OPENROUTER_API_KEY=your_openrouter_api_key
+   OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct:free
+   ```
+
+   **OpenAI:**
+   ```env
+   LLM_PROVIDER=openai
+   OPENAI_API_KEY=your_openai_api_key
+   OPENAI_MODEL=gpt-4o-mini
+   ```
+
+*(If credentials are missing or invalid, the system automatically falls back to `local` mode to prevent runtime crashes.)*
+
+---
+
+## 📊 Policy Reference Data (`data/travel_expense_policy.csv`)
 
 | Category | Region | Daily Limit (USD) | Conditions / Notes |
 | :--- | :--- | :--- | :--- |
@@ -127,74 +134,81 @@ pytest -v
 | **Airfare** | Global | Rule | Business class permitted for flights over 6 hours |
 | **Incidentals** | Global | $25.00 | Per day; no receipt required |
 
-*Note: Ingestion automatically catches and purges duplicate rows (such as duplicate row 14) during load time.*
+---
+
+## 🏗️ Architecture
+
+```
+User Query (CLI / REPL)
+       │
+       ▼
+┌───────────────────────────────┐
+│       PolicyAssistant         │
+│     (Workflow Controller)     │
+└──────────────┬────────────────┘
+               │
+        ┌──────┴────────┐
+        ▼               ▼
+┌──────────────┐ ┌──────────────┐
+│ PolicyIndex  │ │ PolicyLoader │
+│ (Retrieval & │ │ (Deduplicate │
+│  Guardrail)  │ │  & Validate) │
+└──────┬───────┘ └──────────────┘
+       │
+       ├─────────────────────────────────────────┐
+       ▼                                         ▼
+[Status: COVERED]                        [Status: OUT_OF_SCOPE]
+       │                                         │
+       ▼                                         ▼
+┌──────────────────────────────┐        ┌──────────────────────────────┐
+│       ProviderFactory        │        │   Explicit Policy Refusal    │
+│  (Local / OpenRouter/ OpenAI)│        │  (Clear boundary statement)  │
+└──────────────┬───────────────┘        └──────────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ Grounded Response Generator  │
+│  (With Verifiable Citations) │
+└──────────────────────────────┘
+```
 
 ---
 
-## Optional: Configuring Cloud LLM Providers
-
-By default, the assistant runs in high-reliability **`local`** mode with deterministic synthesis. To enable cloud LLM synthesis:
-
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Configure your desired provider:
-
-**For OpenRouter (Free open-source & commercial models):**
-```env
-LLM_PROVIDER=openrouter
-OPENROUTER_API_KEY=your-openrouter-key
-OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct:free
-```
-
-**For standard OpenAI:**
-```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
-```
-
-*If credentials are missing or invalid, the assistant automatically falls back to `local` mode to prevent any runtime interruption.*
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 .
 ├── data/
-│   └── travel_expense_policy.csv        # Policy dataset
+│   └── travel_expense_policy.csv        # Canonical policy dataset (12 rules + duplicate row 14)
 ├── src/
 │   └── policy_agent/
-│       ├── __init__.py                  # Package exports
-│       ├── config.py                    # Environment & provider settings
+│       ├── __init__.py                  # Public package exports
+│       ├── config.py                    # Environment & configuration loader
 │       ├── schemas.py                   # Pydantic data models & status enums
 │       ├── ingestion.py                 # CSV ingestion & deduplication engine
-│       ├── policy_index.py              # Rule evaluation & guardrail index
+│       ├── policy_index.py              # Search index, entity synonyms & guardrails
 │       ├── workflow.py                  # High-level assistant orchestrator
 │       └── providers/
 │           ├── __init__.py
-│           ├── base.py                  # Base provider interface
-│           ├── local_engine.py          # Deterministic grounded engine
+│           ├── base.py                  # Abstract base provider interface
+│           ├── local_engine.py          # Deterministic grounded offline engine
 │           ├── openrouter_provider.py   # OpenRouter integration (supports free models)
 │           ├── openai_provider.py       # OpenAI integration
-│           └── factory.py               # Provider factory
+│           └── factory.py               # Provider factory with automatic fallback
 ├── tests/
-│   ├── conftest.py                      # Test fixtures
-│   ├── test_ingestion.py                # Ingestion & deduplication tests
-│   ├── test_policy_index.py             # Rule matching & threshold tests
-│   ├── test_out_of_scope.py             # Guardrail & refusal tests
-│   └── test_end_to_end.py               # Integration tests
-├── main.py                              # Interactive & one-shot CLI
-├── requirements.txt                     # Pinned dependencies
+│   ├── conftest.py                      # Shared test fixtures
+│   ├── test_ingestion.py                # CSV loading & duplicate purge tests
+│   ├── test_policy_index.py             # Rule matching & flight threshold tests
+│   ├── test_out_of_scope.py             # Guardrail refusal tests
+│   └── test_end_to_end.py               # End-to-end integration & citation tests
+├── main.py                              # Interactive & one-shot CLI entrypoint
+├── requirements.txt                     # Pinned project dependencies
 ├── pyproject.toml                       # Python package configuration
 ├── Dockerfile                           # Container definition
-├── .dockerignore                        # Docker ignore rules
+├── .dockerignore                        # Docker build ignore rules
 ├── .env.example                         # Environment configuration template
 ├── .gitignore                           # Git hygiene rules
-├── README.md                            # Documentation
-├── SUBMISSION_NOTE.md                   # Engineering highlights & roadmap
+├── README.md                            # Project documentation
+├── SUBMISSION_NOTE.md                   # Assessment submission summary & roadmap
 └── Technical_Assessment.pdf             # Original assessment specification
 ```
