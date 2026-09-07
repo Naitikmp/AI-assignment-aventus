@@ -21,7 +21,7 @@ The policy dataset contains a deliberate duplicate row (row 14: UK Meals). The i
 
 ### Modular Architecture (Provider Abstraction & Factory Pattern)
 The core workflow decouples policy evaluation from response generation:
-- **Factory Pattern (`ProviderFactory`):** Detects environment configuration and routes to `LocalPolicyProvider`, `AzureOpenAIProvider`, or `OpenAIProvider`.
+- **Factory Pattern (`ProviderFactory`):** Detects environment configuration and routes to `LocalPolicyProvider`, `OpenRouterProvider` (supporting free open-source models), or `OpenAIProvider`.
 - **Graceful Fallback:** If cloud credentials are not supplied or fail to initialize, the system automatically defaults to `local` mode without interrupting execution.
 
 ### Comprehensive Test Automation
@@ -34,7 +34,7 @@ A full `pytest` suite tests ingestion, duplicate filtering, regional rule matchi
 With additional time, I would extend this solution along three practical paths:
 
 1. **Receipt Parsing & Automated Pre-Audit (Multimodal Document Intelligence):**
-   - Add OCR and receipt extraction (using Azure Document Intelligence or multimodal vision models) so employees can upload receipt photos or PDF invoices to extract amounts, dates, and categories, automatically auditing them against daily policy limits prior to claim submission.
+   - Add OCR and receipt extraction (using multimodal vision models or document AI) so employees can upload receipt photos or PDF invoices to extract amounts, dates, and categories, automatically auditing them against daily policy limits prior to claim submission.
 
 2. **Scaling Retrieval for Multi-Document Policy Handbooks (Hybrid Search):**
    - If policy documents expand beyond structured CSV tables into multi-page unstructured PDF handbooks and country addendums, transition the retrieval layer to hybrid search (combining BM25 lexical matching with dense semantic embeddings and metadata filtering) to preserve precision and row-level traceability at scale.

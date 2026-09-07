@@ -14,12 +14,12 @@ class ProviderFactory:
     def create(provider_name: str = None) -> tuple[BasePolicyProvider, str]:
         target = (provider_name or AgentConfig.get_effective_provider()).strip().lower()
 
-        if target == "azure_openai":
+        if target == "openrouter":
             try:
-                from src.policy_agent.providers.azure_openai import AzureOpenAIProvider
-                return AzureOpenAIProvider(), "azure_openai"
+                from src.policy_agent.providers.openrouter_provider import OpenRouterProvider
+                return OpenRouterProvider(), "openrouter"
             except Exception as e:
-                logger.warning(f"Could not initialize Azure OpenAI ({e}). Using LocalPolicyProvider.")
+                logger.warning(f"Could not initialize OpenRouter ({e}). Using LocalPolicyProvider.")
                 return LocalPolicyProvider(), "local"
 
         elif target == "openai":
@@ -29,13 +29,4 @@ class ProviderFactory:
             except Exception as e:
                 logger.warning(f"Could not initialize OpenAI ({e}). Using LocalPolicyProvider.")
                 return LocalPolicyProvider(), "local"
-
-        elif target == "openrouter":
-            try:
-                from src.policy_agent.providers.openrouter_provider import OpenRouterProvider
-                return OpenRouterProvider(), "openrouter"
-            except Exception as e:
-                logger.warning(f"Could not initialize OpenRouter ({e}). Using LocalPolicyProvider.")
-                return LocalPolicyProvider(), "local"
-
         return LocalPolicyProvider(), "local"

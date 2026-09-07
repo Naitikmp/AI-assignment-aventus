@@ -27,8 +27,10 @@ def test_end_to_end_provider_fallback():
     assert "$25.00 USD" in res.answer
 
 
-def test_openrouter_provider_fallback_without_credentials():
-    # Attempting to initialize OpenRouter without an API key gracefully defaults to local
+def test_openrouter_provider_fallback_without_credentials(monkeypatch):
+    # Simulating missing credentials causes OpenRouter initialization to gracefully default to local
+    from src.policy_agent.config import AgentConfig
+    monkeypatch.setattr(AgentConfig, "OPENROUTER_API_KEY", None)
     assistant = PolicyAssistant(provider_name="openrouter")
     assert assistant.provider_name == "local"
     res = assistant.ask("What is the meal limit in India?")

@@ -1,6 +1,6 @@
 # Corporate Travel Expense Policy Assistant
 
-A focused, reliable AI assistant designed to answer corporate travel expense questions grounded strictly in organizational policy. Built with an offline-first architecture, explicit out-of-scope guardrails, data deduplication, and pluggable integration for Azure OpenAI and OpenAI.
+A focused, reliable AI assistant designed to answer corporate travel expense questions grounded strictly in organizational policy. Built with an offline-first architecture, explicit out-of-scope guardrails, data deduplication, and pluggable integration for OpenRouter and OpenAI.
 
 ---
 
@@ -10,7 +10,7 @@ A focused, reliable AI assistant designed to answer corporate travel expense que
 - **Out-of-Scope Policy Guardrail:** Automatically flags queries that fall outside corporate coverage (e.g., unsupported expense categories like car rental or personal expenses, or regions where specific services like taxis are not covered).
 - **Data Ingestion & Deduplication:** Generic CSV parser that normalizes schema types, handles nullable limits, and cleans duplicate rows before indexing.
 - **Deterministic Default Engine:** Operates instantly out-of-the-box with **zero external API keys, accounts, or model downloads required**.
-- **Optional Cloud LLM Support:** Easily connects to **Azure OpenAI** or **OpenAI** when environment variables are supplied, with automatic fallback to local mode.
+- **Optional Cloud LLM Support:** Easily connects to **OpenRouter** (supports free models) or **OpenAI** when environment variables are supplied, with automatic fallback to local mode.
 - **Interactive & Single-Shot CLI:** Formatted with terminal cards, status badges, and source citations.
 - **Containerized:** Single-stage Docker support for reproducible deployment.
 
@@ -42,7 +42,7 @@ User Query (CLI / REPL)
        ▼                                         ▼
 ┌──────────────────────────────┐     ┌──────────────────────────────┐
 │       ProviderFactory        │     │  Explicit Policy Refusal     │
-│   (Local / Azure / OpenAI)   │     │  (Clear boundary statement)  │
+│  (Local / OpenRouter/ OpenAI)│     │  (Clear boundary statement)  │
 └──────────────┬───────────────┘     └──────────────────────────────┘
                │
                ▼
@@ -149,15 +149,6 @@ OPENROUTER_API_KEY=your-openrouter-key
 OPENROUTER_MODEL=meta-llama/llama-3.2-3b-instruct:free
 ```
 
-**For Azure OpenAI (Enterprise Microsoft Stack):**
-```env
-LLM_PROVIDER=azure_openai
-AZURE_OPENAI_API_KEY=your-azure-api-key
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
-AZURE_OPENAI_API_VERSION=2024-02-15-preview
-```
-
 **For standard OpenAI:**
 ```env
 LLM_PROVIDER=openai
@@ -188,7 +179,6 @@ OPENAI_MODEL=gpt-4o-mini
 │           ├── base.py                  # Base provider interface
 │           ├── local_engine.py          # Deterministic grounded engine
 │           ├── openrouter_provider.py   # OpenRouter integration (supports free models)
-│           ├── azure_openai.py          # Azure OpenAI integration
 │           ├── openai_provider.py       # OpenAI integration
 │           └── factory.py               # Provider factory
 ├── tests/

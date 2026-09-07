@@ -22,7 +22,11 @@ class OpenRouterProvider(BasePolicyProvider):
                 raise ValueError("OPENROUTER_API_KEY is not set.")
             self.client = OpenAI(
                 base_url=AgentConfig.OPENROUTER_BASE_URL,
-                api_key=AgentConfig.OPENROUTER_API_KEY
+                api_key=AgentConfig.OPENROUTER_API_KEY,
+                default_headers={
+                    "HTTP-Referer": "https://github.com/Naitikmp/AI-assignment-aventus",
+                    "X-Title": "Travel Expense Policy Assistant",
+                },
             )
             self.model = AgentConfig.OPENROUTER_MODEL
         except ImportError:
