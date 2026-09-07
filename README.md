@@ -2,7 +2,7 @@
 
 A reliable, lightweight AI assistant that answers employee questions about corporate travel expense policies. Built with an offline-first architecture, strict row-level citations, explicit out-of-scope guardrails, and automated deduplication.
 
-> **Zero-Friction Default:** Runs out-of-the-box with **zero API keys, zero paid accounts, and zero model downloads**.
+
 
 ---
 
