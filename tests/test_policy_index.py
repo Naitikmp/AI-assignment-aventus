@@ -80,3 +80,32 @@ def test_incidentals(loaded_records):
     assert len(matched) == 1
     assert matched[0].daily_limit_usd == 25.0
     assert "no receipt required" in matched[0].notes.lower()
+
+
+def test_multi_category_covered_query(loaded_records):
+    records, _ = loaded_records
+    index = PolicyIndex(records)
+    intent = index.parse_intent("airfare food meals in uae")
+    assert "Meals" in intent.detected_categories
+    assert "Airfare" in intent.detected_categories
+    assert intent.detected_region == "United Arab Emirates"
+
+    verdict, matched, _ = index.search(intent)
+    assert verdict == CoverageVerdict.COVERED
+    categories_found = {r.category for r in matched}
+    assert "Meals" in categories_found
+    assert "Airfare" in categories_found
+
+
+def test_multi_category_mixed_coverage(loaded_records):
+    records, _ = loaded_records
+    index = PolicyIndex(records)
+    intent = index.parse_intent("meals and taxi in uae")
+    assert "Meals" in intent.detected_categories
+    assert "Taxi" in intent.detected_categories
+
+    verdict, matched, note = index.search(intent)
+    assert verdict == CoverageVerdict.PARTIALLY_COVERED
+    assert len(matched) == 1
+    assert matched[0].category == "Meals"
+    assert "Taxi in 'United Arab Emirates' are not covered" in note

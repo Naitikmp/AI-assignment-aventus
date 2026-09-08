@@ -1,5 +1,5 @@
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from src.policy_agent.schemas import CoverageVerdict, ExtractedIntent, PolicyRecord
 
@@ -39,16 +39,15 @@ class PolicyIndex:
     def parse_intent(self, query: str) -> ExtractedIntent:
         q_lower = query.lower()
 
-        # 1. Resolve Category
-        detected_category = None
+        # 1. Resolve All Matching Categories
+        detected_categories: List[str] = []
         for cat, synonyms in self.CATEGORY_SYNONYMS.items():
             for syn in synonyms:
                 pattern = rf"\b{re.escape(syn)}\b"
                 if re.search(pattern, q_lower):
-                    detected_category = cat
+                    if cat not in detected_categories:
+                        detected_categories.append(cat)
                     break
-            if detected_category:
-                break
 
         # 2. Resolve Region
         detected_region = None
@@ -63,12 +62,13 @@ class PolicyIndex:
 
         # 3. Detect flight duration if discussing airfare
         flight_hours = None
-        is_airfare = detected_category == "Airfare" or any(
+        is_airfare = ("Airfare" in detected_categories) or any(
             re.search(rf"\b{re.escape(term)}\b", q_lower) for term in ["flight", "flights", "airfare", "fly", "flying"]
         )
+        if is_airfare and "Airfare" not in detected_categories:
+            detected_categories.append("Airfare")
+
         if is_airfare:
-            detected_category = "Airfare"
-            # Support "8 hour", "8-hour", "8 hrs", "8-hrs", "8hours"
             hour_match = re.search(r"(\d+(?:\.\d+)?)\s*[-\s]?\s*(?:hours?|hrs?)", q_lower)
             if hour_match:
                 try:
@@ -76,46 +76,38 @@ class PolicyIndex:
                 except ValueError:
                     pass
 
+        # 4. Detect unsupported out-of-scope topics
+        unsupported_found = []
+        for unsupported in self.KNOWN_OUT_OF_SCOPE_TOPICS:
+            if re.search(rf"\b{re.escape(unsupported)}\b", q_lower):
+                unsupported_found.append(unsupported)
+
         is_asking_limit = any(term in q_lower for term in ["limit", "allowance", "max", "maximum", "how much", "rate", "cost"])
         is_asking_receipts = any(term in q_lower for term in ["receipt", "receipts", "actuals", "tip", "tips", "proof"])
 
         return ExtractedIntent(
             raw_query=query,
-            detected_category=detected_category,
+            detected_categories=detected_categories,
             detected_region=detected_region,
             flight_duration_hours=flight_hours,
             is_airfare=is_airfare,
             is_asking_limit=is_asking_limit,
-            is_asking_receipts=is_asking_receipts
+            is_asking_receipts=is_asking_receipts,
+            unsupported_topics=unsupported_found,
         )
 
-    def search(self, intent: ExtractedIntent) -> Tuple[CoverageVerdict, List[PolicyRecord], str]:
-        q_lower = intent.raw_query.lower()
-
-        # Check for explicit unsupported expense categories
-        for unsupported in self.KNOWN_OUT_OF_SCOPE_TOPICS:
-            if re.search(rf"\b{re.escape(unsupported)}\b", q_lower):
-                return (
-                    CoverageVerdict.OUT_OF_SCOPE,
-                    [],
-                    f"Expenses for '{unsupported}' are not covered under the current travel expense policy."
-                )
-
-        # If no category detected
-        if not intent.detected_category:
-            return (
-                CoverageVerdict.OUT_OF_SCOPE,
-                [],
-                "The question does not match any recognized travel expense category (Meals, Hotel, Taxi, Airfare, Incidentals)."
-            )
-
-        cat = intent.detected_category
-
+    def _search_single_category(
+        self,
+        cat: str,
+        region: Optional[str],
+        flight_hours: Optional[float],
+        raw_query: str
+    ) -> Tuple[CoverageVerdict, List[PolicyRecord], str]:
         # Case 1: Airfare (Global category)
         if cat == "Airfare":
             airfare_records = [r for r in self.records if r.category == "Airfare"]
-            if intent.flight_duration_hours is not None:
-                if intent.flight_duration_hours < 6.0:
+            if flight_hours is not None:
+                if flight_hours < 6.0:
                     matched = [r for r in airfare_records if "under 6 hours" in r.notes.lower()]
                     return CoverageVerdict.COVERED, matched, "Matched policy for flights under 6 hours."
                 else:
@@ -129,15 +121,11 @@ class PolicyIndex:
             return CoverageVerdict.COVERED, incidental_records, "Matched global incidentals policy."
 
         # Case 3: Regional Categories (Meals, Hotel, Taxi)
-        region = intent.detected_region
-
-        # Detect if an unlisted destination was mentioned using prepositions ("in <place>", "to <place>", "for <place>")
         if not region:
-            unlisted_match = re.search(r"\b(?:in|for|to|at)\s+([a-zA-Z\s]+?)(?:\?|$|\.|\,)", intent.raw_query, re.IGNORECASE)
+            unlisted_match = re.search(r"\b(?:in|for|to|at)\s+([a-zA-Z\s]+?)(?:\?|$|\.|\,)", raw_query, re.IGNORECASE)
             if unlisted_match:
                 potential_place = unlisted_match.group(1).strip()
-                # Filter out generic words
-                generic_words = {"london", "hotel", "hotels", "meals", "food", "taxi", "business", "standard", "days", "day", "night"}
+                generic_words = {"london", "hotel", "hotels", "meals", "food", "taxi", "business", "standard", "days", "day", "night", "flight", "flights"}
                 if potential_place.lower() not in generic_words and len(potential_place) > 2:
                     return (
                         CoverageVerdict.OUT_OF_SCOPE,
@@ -145,7 +133,6 @@ class PolicyIndex:
                         f"Region '{potential_place}' is not covered under the company travel expense policy. Covered regions are: United Kingdom, United States, United Arab Emirates, and India."
                     )
 
-            # Did user ask generically for a category across all regions?
             cat_records = [r for r in self.records if r.category == cat]
             if cat_records:
                 return (
@@ -164,12 +151,77 @@ class PolicyIndex:
         if matched:
             return CoverageVerdict.COVERED, matched, f"Matched {cat} policy for {region}."
 
-        # Category is known, but NOT for this region! (e.g. Taxi in UAE, Meals in Germany)
+        # Category is known, but NOT for this region!
         available_regions = [r.region for r in self.records if r.category == cat and r.region != "Global"]
         regions_str = ", ".join(sorted(set(available_regions))) if available_regions else "None"
-        
+
         return (
             CoverageVerdict.OUT_OF_SCOPE,
             [],
             f"The policy covers {cat} only for: {regions_str}. Expenses for {cat} in '{region}' are not covered."
         )
+
+    def search(self, intent: ExtractedIntent) -> Tuple[CoverageVerdict, List[PolicyRecord], str]:
+        # If unsupported topic found and NO recognized categories:
+        if intent.unsupported_topics and not intent.detected_categories:
+            unsupported = intent.unsupported_topics[0]
+            return (
+                CoverageVerdict.OUT_OF_SCOPE,
+                [],
+                f"Expenses for '{unsupported}' are not covered under the current travel expense policy."
+            )
+
+        # If neither category nor unsupported topic was recognized:
+        if not intent.detected_categories:
+            return (
+                CoverageVerdict.OUT_OF_SCOPE,
+                [],
+                "The question does not match any recognized travel expense category (Meals, Hotel, Taxi, Airfare, Incidentals)."
+            )
+
+        # If only 1 category and no unsupported topics, evaluate directly
+        if len(intent.detected_categories) == 1 and not intent.unsupported_topics:
+            return self._search_single_category(
+                intent.detected_categories[0],
+                intent.detected_region,
+                intent.flight_duration_hours,
+                intent.raw_query
+            )
+
+        # Multiple categories and/or combination with unsupported topics
+        combined_records: List[PolicyRecord] = []
+        covered_notes: List[str] = []
+        uncovered_notes: List[str] = []
+        partially_covered_notes: List[str] = []
+
+        for u in intent.unsupported_topics:
+            uncovered_notes.append(f"Expenses for '{u}' are not covered under the policy.")
+
+        for cat in intent.detected_categories:
+            verdict, records, note = self._search_single_category(
+                cat, intent.detected_region, intent.flight_duration_hours, intent.raw_query
+            )
+            if verdict == CoverageVerdict.COVERED:
+                combined_records.extend(records)
+                covered_notes.append(note)
+            elif verdict == CoverageVerdict.PARTIALLY_COVERED:
+                combined_records.extend(records)
+                partially_covered_notes.append(note)
+            else:
+                uncovered_notes.append(note)
+
+        # Determine overall status
+        if combined_records and not uncovered_notes and not partially_covered_notes:
+            return CoverageVerdict.COVERED, combined_records, " ".join(covered_notes)
+
+        if combined_records and (uncovered_notes or partially_covered_notes):
+            diag_parts = []
+            if covered_notes:
+                diag_parts.append(" ".join(covered_notes))
+            if partially_covered_notes:
+                diag_parts.append(" ".join(partially_covered_notes))
+            if uncovered_notes:
+                diag_parts.append("Out of policy notes: " + " ".join(uncovered_notes))
+            return CoverageVerdict.PARTIALLY_COVERED, combined_records, " | ".join(diag_parts)
+
+        return CoverageVerdict.OUT_OF_SCOPE, [], " ".join(uncovered_notes) if uncovered_notes else "Not covered under travel expense policy."

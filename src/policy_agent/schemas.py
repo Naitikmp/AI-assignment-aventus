@@ -32,12 +32,23 @@ class PolicyRecord(BaseModel):
 class ExtractedIntent(BaseModel):
     """Structured query analysis extracted from the user prompt."""
     raw_query: str
-    detected_category: Optional[str] = None
+    detected_categories: List[str] = Field(default_factory=list)
     detected_region: Optional[str] = None
     flight_duration_hours: Optional[float] = None
     is_airfare: bool = False
     is_asking_limit: bool = False
     is_asking_receipts: bool = False
+    unsupported_topics: List[str] = Field(default_factory=list)
+
+    @property
+    def primary_category(self) -> Optional[str]:
+        """First detected category if any."""
+        return self.detected_categories[0] if self.detected_categories else None
+
+    @property
+    def detected_category(self) -> Optional[str]:
+        """Backward-compatible property returning the primary category."""
+        return self.primary_category
 
 
 class AgentResponse(BaseModel):

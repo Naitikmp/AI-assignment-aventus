@@ -111,7 +111,7 @@ def main():
     )
     parser.add_argument("query", nargs="?", type=str, help="Single query to evaluate against policy")
     parser.add_argument("--data", type=str, default=None, help="Path to policy CSV dataset (optional)")
-    parser.add_argument("--provider", type=str, choices=["local", "azure_openai", "openai"], default=None, help="Override provider (default: local or detected)")
+    parser.add_argument("--provider", type=str, choices=["local", "openrouter", "openai"], default=None, help="Override provider (default: local or detected)")
 
     args = parser.parse_args()
 
